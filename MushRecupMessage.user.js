@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name     MushRecupMessage
-// @version  0.1
+// @version  0.2
 // @match    http://mush.vg/*
 // @match    http://mush.vg/#
 // @match    http://mush.twinoid.com/*
@@ -10,51 +10,53 @@
 // @grant    unsafeWindow
 // ==/UserScript==
 
-try{
-
 var console = unsafeWindow.console;
 var localStorage = unsafeWindow.localStorage;
 
 function saveMessage(el) {
-	localStorage['RM-penultimateMessage'] = localStorage['RM-lastMessage'];
+	if (localStorage['RM-lastMessage']) {
+		localStorage['RM-penultimateMessage'] = localStorage['RM-lastMessage'];
+	}
+	else {
+		localStorage['RM-penultimateMessage'] = el.value;
+	}
 	localStorage['RM-lastMessage'] = el.value;
 }
 
-console.log('1');
+function detectInput() {
+	var textareas = document.querySelectorAll('#chat_col textarea:not(.RM-scripted)');
+	for (var i = 0; i < textareas.length; i++) {
+		textareas[i].className = textareas[i].className + ' RM-scripted';
+		textareas[i].addEventListener('input', function() { saveMessage(this); });
+	}
+}
 
 setInterval(function() {
-	try{
 	if (!document.getElementById('RM_test')) { //If the page has been updated
 		var chatBlock = document.getElementById('chatBlock');
 		var test = document.createElement('div');
 		test.id = 'RM_test';
+		detectInput();
 		chatBlock.appendChild(test);
 		chatBlock.addEventListener('scroll', function() {
 			if (unsafeWindow.Main.lmwProcessing) {
 				var chatloading = window.setInterval(function() {
 					if (!unsafeWindow.Main.lmwProcessing) { //Detect end of loading
 						clearInterval(chatloading);
-						var textareas = document.querySelectorAll('#chat_col textarea');
-						for (var i = 0; i < textareas.length; i++) {
-							textareas[i].addEventListener('input', saveMessage);
-						}
+						detectInput();
 					}
 				}, 100);
 				return true;
 			}
 		});
 	}
-	}catch(e){console.log(e);}
 }, 500);
-
-console.log('2');
 
 var button = document.createElement('div');
 button.innerHTML = '<div class="butright"><div class="butbg">Message perdu !</div></div>';
 button.className = 'but';
 button.style.marginTop = '20px';
 button.addEventListener('click', function() {
-	try{
 	var popup = document.createElement('div');
 	popup.id = 'RM-popup';
 	popup.style.backgroundColor = 'blue';
@@ -62,6 +64,11 @@ button.addEventListener('click', function() {
 	popup.style.width = '400px';
 	popup.style.left = Math.floor((window.innerWidth - 400) / 2) + 'px';
 	popup.style.top = (window.scrollY + 50) + 'px';
+	popup.style.padding = '10px';
+	popup.style.boxShadow = '#000 5px 5px 10px';
+	popup.style.border = '2px #000440 solid';
+	popup.style.borderRadius = '5px';
+	popup.style.backgroundColor = '#338';
 	document.body.appendChild(popup);
 	var close = document.createElement('div');
 	close.className = 'but';
@@ -75,11 +82,8 @@ button.addEventListener('click', function() {
 	popup.appendChild(close);
 	var message = document.createElement('textarea');
 	message.value = localStorage['RM-penultimateMessage'];
+	message.style.width = '100%';
+	message.style.color = 'black';
 	popup.appendChild(message);
-	}catch(e){console.log(e);}
 });
 document.getElementById('chat_col').appendChild(button);
-
-console.log('3');
-
-}catch(e){console.log(e);}
